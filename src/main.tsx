@@ -21,7 +21,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
-        <Toaster richColors />
+        <Toaster richColors position="top-right" />
         <TwScreenIndicator />
       </ThemeProvider>
       <ReactQueryDevtools />
