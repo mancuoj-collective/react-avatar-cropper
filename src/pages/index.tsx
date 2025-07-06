@@ -1,6 +1,9 @@
+import type { SyntheticEvent } from 'react'
 import type { FileRejection, FileWithPath } from 'react-dropzone'
+import type { Crop } from 'react-image-crop'
 import { useCallback, useEffect, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
+import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop'
 import { toast } from 'sonner'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -14,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import 'react-image-crop/dist/ReactCrop.css'
 
 type FileWithPreview = FileWithPath & {
   preview: string
@@ -21,6 +25,7 @@ type FileWithPreview = FileWithPath & {
 
 export function App() {
   const user = { name: 'test', image: '' }
+  const aspect = 1
   const [file, setFile] = useState<FileWithPreview | null>(null)
   const [open, setOpen] = useState(false)
   const { getRootProps, getInputProps } = useDropzone({
@@ -47,6 +52,7 @@ export function App() {
       console.error(errors)
     },
   })
+  const [crop, setCrop] = useState<Crop>()
 
   useEffect(() => {
     // Make sure to revoke the data uris to avoid memory leaks, will run on unmount
@@ -56,6 +62,29 @@ export function App() {
       }
     }
   }, [file])
+
+  function onImageLoad(e: SyntheticEvent<HTMLImageElement>) {
+    if (file) {
+      URL.revokeObjectURL(file.preview)
+    }
+    const { width, height } = e.currentTarget
+    setCrop(
+      centerCrop(
+        makeAspectCrop(
+          { unit: '%', width: 50, height: 50 },
+          aspect,
+          width,
+          height,
+        ),
+        width,
+        height,
+      ),
+    )
+  }
+
+  function handleSave() {
+
+  }
 
   return (
     <div className="relative font-sans antialiased">
@@ -77,21 +106,26 @@ export function App() {
                 This is a preview of the avatar you selected.
               </DialogDescription>
             </DialogHeader>
-            <img
-              src={file?.preview}
-              alt={file?.name}
-              className="size-full max-h-[500px] object-contain"
-              onLoad={() => {
-                if (file) {
-                  URL.revokeObjectURL(file.preview)
-                }
-              }}
-            />
+            <ReactCrop
+              crop={crop}
+              onChange={(_, percentCrop) => setCrop(percentCrop)}
+              circularCrop={true}
+              aspect={aspect}
+              minWidth={10}
+              minHeight={10}
+            >
+              <img
+                src={file?.preview}
+                alt={file?.name}
+                className="size-full max-h-[500px] object-contain"
+                onLoad={onImageLoad}
+              />
+            </ReactCrop>
             <DialogFooter>
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button>Save</Button>
+              <Button onClick={handleSave}>Save</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
