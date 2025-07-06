@@ -1,7 +1,7 @@
 import type { SyntheticEvent } from 'react'
 import type { FileRejection, FileWithPath } from 'react-dropzone'
 import type { Crop } from 'react-image-crop'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop'
 import { toast } from 'sonner'
@@ -24,7 +24,7 @@ type FileWithPreview = FileWithPath & {
 }
 
 export function App() {
-  const user = { name: 'test', image: '' }
+  const [avatar, setAvatar] = useState('')
   const aspect = 1
   const [file, setFile] = useState<FileWithPreview | null>(null)
   const [open, setOpen] = useState(false)
@@ -52,7 +52,9 @@ export function App() {
       console.error(errors)
     },
   })
+  const imgRef = useRef<HTMLImageElement>(null)
   const [crop, setCrop] = useState<Crop>()
+  const [croppedImage, setCroppedImage] = useState<string | null>(null)
 
   useEffect(() => {
     // Make sure to revoke the data uris to avoid memory leaks, will run on unmount
@@ -82,8 +84,44 @@ export function App() {
     )
   }
 
-  function handleSave() {
+  function onCropComplete(crop: Crop) {
+    if (imgRef.current && crop.width && crop.height) {
+      setCroppedImage(getCroppedImg(imgRef.current, crop))
+    }
+  }
 
+  function getCroppedImg(image: HTMLImageElement, crop: Crop) {
+    const canvas = document.createElement('canvas')
+    const scaleX = image.naturalWidth / image.width
+    const scaleY = image.naturalHeight / image.height
+    canvas.width = crop.width * scaleX
+    canvas.height = crop.height * scaleY
+    const ctx = canvas.getContext('2d')
+    if (!ctx) {
+      toast.error('No canvas context')
+      return null
+    }
+    ctx.imageSmoothingEnabled = true
+    ctx.drawImage(
+      image,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      0,
+      0,
+      crop.width * scaleX,
+      crop.height * scaleY,
+    )
+    return canvas.toDataURL('image/png', 1.0)
+  }
+
+  function handleSave() {
+    if (!croppedImage) {
+      return
+    }
+    setAvatar(croppedImage)
+    setOpen(false)
   }
 
   return (
@@ -94,8 +132,8 @@ export function App() {
           className="size-16 rounded-full border-2 border-dashed shadow cursor-pointer"
         >
           <input {...getInputProps()} />
-          <AvatarImage src={user.image} />
-          <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+          <AvatarImage src={avatar} />
+          <AvatarFallback>U</AvatarFallback>
         </Avatar>
 
         <Dialog open={open} onOpenChange={setOpen}>
@@ -109,12 +147,14 @@ export function App() {
             <ReactCrop
               crop={crop}
               onChange={(_, percentCrop) => setCrop(percentCrop)}
+              onComplete={c => onCropComplete(c)}
               circularCrop={true}
               aspect={aspect}
               minWidth={10}
               minHeight={10}
             >
               <img
+                ref={imgRef}
                 src={file?.preview}
                 alt={file?.name}
                 className="size-full max-h-[500px] object-contain"
@@ -125,7 +165,9 @@ export function App() {
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button onClick={handleSave}>Save</Button>
+              <Button onClick={handleSave} disabled={!croppedImage}>
+                Save
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
