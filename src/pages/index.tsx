@@ -152,12 +152,13 @@ export function App() {
               aspect={aspect}
               minWidth={10}
               minHeight={10}
+              className="max-h-[500px]"
             >
               <img
                 ref={imgRef}
                 src={file?.preview}
                 alt={file?.name}
-                className="size-full max-h-[500px] object-contain"
+                className="size-full object-contain"
                 onLoad={onImageLoad}
               />
             </ReactCrop>
