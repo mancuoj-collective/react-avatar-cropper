@@ -48,9 +48,6 @@ export function App() {
       setFile(fileWithPreview)
       setOpen(true)
     }, []),
-    onError: (errors: Error) => {
-      console.error(errors)
-    },
   })
   const imgRef = useRef<HTMLImageElement>(null)
   const [crop, setCrop] = useState<Crop>()
@@ -70,18 +67,11 @@ export function App() {
       URL.revokeObjectURL(file.preview)
     }
     const { width, height } = e.currentTarget
-    setCrop(
-      centerCrop(
-        makeAspectCrop(
-          { unit: '%', width: 50, height: 50 },
-          aspect,
-          width,
-          height,
-        ),
-        width,
-        height,
-      ),
-    )
+    setCrop(centerCrop(
+      makeAspectCrop({ unit: '%', width: 50, height: 50 }, aspect, width, height),
+      width,
+      height,
+    ))
   }
 
   function onCropComplete(crop: Crop) {
@@ -150,8 +140,8 @@ export function App() {
               onComplete={c => onCropComplete(c)}
               circularCrop={true}
               aspect={aspect}
-              minWidth={10}
-              minHeight={10}
+              minWidth={100}
+              minHeight={100}
               className="max-h-[500px]"
             >
               <img
