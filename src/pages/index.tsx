@@ -30,7 +30,7 @@ export function App() {
   const [open, setOpen] = useState(false)
   const { getRootProps, getInputProps } = useDropzone({
     maxFiles: 1,
-    maxSize: 500 * 1024, // 500kb
+    maxSize: 10 * 1024 * 1024, // 10MB
     noDrag: true,
     accept: {
       'image/*': [],
@@ -40,7 +40,6 @@ export function App() {
         toast.error(fileRejections[0].errors[0].message)
         return
       }
-
       const file = acceptedFiles[0]
       const fileWithPreview = Object.assign(file, {
         preview: URL.createObjectURL(file),
@@ -78,6 +77,9 @@ export function App() {
     if (imgRef.current && crop.width && crop.height) {
       setCroppedImage(getCroppedImg(imgRef.current, crop))
     }
+    else {
+      setCroppedImage(null)
+    }
   }
 
   function getCroppedImg(image: HTMLImageElement, crop: Crop) {
@@ -103,7 +105,7 @@ export function App() {
       crop.width * scaleX,
       crop.height * scaleY,
     )
-    return canvas.toDataURL('image/png', 1.0)
+    return canvas.toDataURL('image/png', 1)
   }
 
   function handleSave() {
@@ -116,14 +118,14 @@ export function App() {
 
   return (
     <div className="relative font-sans antialiased">
-      <div className="flex flex-col gap-5 items-center justify-center min-h-svh">
+      <div className="flex gap-8 items-center justify-center min-h-svh">
         <Avatar
           {...getRootProps()}
-          className="size-16 rounded-full border-2 border-dashed shadow cursor-pointer"
+          className="size-36 rounded-full border-2 border-dashed shadow cursor-pointer"
         >
           <input {...getInputProps()} />
           <AvatarImage src={avatar} />
-          <AvatarFallback>U</AvatarFallback>
+          <AvatarFallback className="text-sm">Click to upload</AvatarFallback>
         </Avatar>
 
         <Dialog open={open} onOpenChange={setOpen}>
@@ -163,15 +165,14 @@ export function App() {
           </DialogContent>
         </Dialog>
 
-        <div className="flex gap-2.5 items-center">
-          <Button variant="outline" asChild>
+        <div className="flex flex-col">
+          <Button variant="ghost" size="icon" asChild>
             <a
               href="https://github.com/mancuoj-collective/remix-tmpl"
               target="_blank"
               rel="noopener noreferrer"
             >
               <span className="iconify carbon--logo-github size-4" />
-              GitHub
             </a>
           </Button>
           <ThemeToggle />
