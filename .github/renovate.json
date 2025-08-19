@@ -1,4 +1,5 @@
 {
   "extends": ["github>mancuoj/renovate-config"],
-  "automerge": true
+  "automerge": true,
+  "ignoreTests": true
 }
